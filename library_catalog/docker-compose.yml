@@ -1,0 +1,130 @@
+# ============================================
+# LIBRARY CATALOG - DOCKER COMPOSE
+# Full stack: API + PostgreSQL + Redis
+# ============================================
+
+services:
+  # ========== API ==========
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: library_catalog_api
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=production
+      - DEBUG=false
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/library_catalog
+      - REDIS_URL=redis://redis:6379
+      - CACHE_BACKEND=redis
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-super-secret-key-change-me}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/v1/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+    restart: unless-stopped
+    networks:
+      - library_network
+
+  # ========== API (Development) ==========
+  api-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: library_catalog_api_dev
+    ports:
+      - "8000:8000"
+    environment:
+      - ENVIRONMENT=development
+      - DEBUG=true
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/library_catalog
+      - REDIS_URL=redis://redis:6379
+      - CACHE_BACKEND=memory
+      - JWT_SECRET_KEY=dev-secret-key
+    volumes:
+      - ./src:/app/src:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - library_network
+    profiles:
+      - dev
+
+  # ========== PostgreSQL ==========
+  postgres:
+    image: postgres:16-alpine
+    container_name: library_catalog_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: library_catalog
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - library_network
+
+  # ========== Redis ==========
+  redis:
+    image: redis:7-alpine
+    container_name: library_catalog_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - library_network
+
+  # ========== Migrations ==========
+  migrations:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: library_catalog_migrations
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:postgres@postgres:5432/library_catalog
+    command: ["python", "-m", "alembic", "upgrade", "head"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - library_network
+    profiles:
+      - migrations
+
+# ========== Networks ==========
+networks:
+  library_network:
+    driver: bridge
+
+# ========== Volumes ==========
+volumes:
+  postgres_data:
+  redis_data:
