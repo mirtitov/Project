@@ -55,6 +55,10 @@ class Settings(BaseSettings):
     jwt_access_token_expire_minutes: int = 30
     jwt_refresh_token_expire_days: int = 7
     
+    # Rate Limiting
+    rate_limit_enabled: bool = True
+    rate_limit_per_minute: int = 60  # Общий лимит по умолчанию
+    
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",

@@ -9,6 +9,9 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from slowapi import _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+
 from .api.v1.routers import auth, books, health
 from .core.cache import init_cache
 from .core.clients import clients_manager
@@ -16,6 +19,7 @@ from .core.config import settings
 from .core.database import dispose_engine
 from .core.exceptions import register_exception_handlers
 from .core.logging_config import setup_logging
+from .core.rate_limit import limiter
 
 
 # ========== LIFECYCLE EVENTS ==========
@@ -100,6 +104,16 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+# ========== RATE LIMITING ==========
+
+
+# Добавляем limiter в state для доступа из роутеров
+app.state.limiter = limiter
+
+# Обработчик для превышения лимита
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 
 # ========== EXCEPTION HANDLERS ==========

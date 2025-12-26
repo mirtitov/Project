@@ -7,8 +7,9 @@ API роутер для книг.
 from typing import Annotated
 from uuid import UUID
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Query, Request, status
 
+from ....core.rate_limit import limiter
 from ...dependencies import BookServiceDep
 from ..schemas.book import BookCreate, BookUpdate, ShowBook
 from ..schemas.common import PaginatedResponse, PaginationParams
@@ -26,9 +27,12 @@ router = APIRouter(prefix="/books", tags=["Books"])
         201: {"description": "Книга успешно создана"},
         400: {"description": "Невалидные данные"},
         409: {"description": "Книга с таким ISBN уже существует"},
+        429: {"description": "Превышен лимит запросов"},
     },
 )
+@limiter.limit("30/minute")
 async def create_book(
+    request: Request,
     book_data: BookCreate,
     service: BookServiceDep,
 ) -> ShowBook:
@@ -51,8 +55,11 @@ async def create_book(
     response_model=PaginatedResponse[ShowBook],
     summary="Получить список книг",
     description="Получить список книг с фильтрацией и пагинацией",
+    responses={429: {"description": "Превышен лимит запросов"}},
 )
+@limiter.limit("100/minute")
 async def get_books(
+    request: Request,
     service: BookServiceDep,
     pagination: Annotated[PaginationParams, Depends()],
     title: str | None = Query(None, description="Поиск по названию (частичное совпадение)"),
@@ -96,9 +103,12 @@ async def get_books(
     responses={
         200: {"description": "Книга найдена"},
         404: {"description": "Книга не найдена"},
+        429: {"description": "Превышен лимит запросов"},
     },
 )
+@limiter.limit("100/minute")
 async def get_book(
+    request: Request,
     book_id: UUID,
     service: BookServiceDep,
 ) -> ShowBook:
@@ -123,9 +133,12 @@ async def get_book(
         200: {"description": "Книга обновлена"},
         400: {"description": "Невалидные данные"},
         404: {"description": "Книга не найдена"},
+        429: {"description": "Превышен лимит запросов"},
     },
 )
+@limiter.limit("30/minute")
 async def update_book(
+    request: Request,
     book_id: UUID,
     book_data: BookUpdate,
     service: BookServiceDep,
@@ -154,9 +167,12 @@ async def update_book(
     responses={
         204: {"description": "Книга удалена"},
         404: {"description": "Книга не найдена"},
+        429: {"description": "Превышен лимит запросов"},
     },
 )
+@limiter.limit("10/minute")
 async def delete_book(
+    request: Request,
     book_id: UUID,
     service: BookServiceDep,
 ) -> None:
