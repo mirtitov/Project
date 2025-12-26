@@ -11,6 +11,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .api.v1.routers import auth, books, health
 from .core.cache import init_cache
+from .core.clients import clients_manager
 from .core.config import settings
 from .core.database import dispose_engine
 from .core.exceptions import register_exception_handlers
@@ -45,8 +46,15 @@ async def lifespan(app: FastAPI):
     yield
     
     # Shutdown
+    print("👋 Shutting down...")
+    
+    # Закрыть внешние клиенты (избегаем memory leak)
+    await clients_manager.close_all()
+    
+    # Закрыть соединения с БД
     await dispose_engine()
-    print("👋 Application stopped")
+    
+    print("✅ Application stopped")
 
 
 # ========== CREATE APP ==========
