@@ -13,10 +13,11 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..core.cache import CacheService, get_cache_service
 from ..core.clients import clients_manager
 from ..core.config import settings
-from ..core.database import get_db
+from ..core.database import async_session_maker, get_db
 from ..data.models.user import User
 from ..data.repositories.book_repository import BookRepository
 from ..data.repositories.user_repository import UserRepository
+from ..data.uow import UnitOfWork
 from ..domain.exceptions import InsufficientPermissionsException
 from ..domain.services.auth_service import AuthService
 from ..domain.services.book_service import BookService
@@ -71,6 +72,27 @@ def get_cached_openlibrary_client() -> CachedOpenLibraryClient:
         CachedOpenLibraryClient: Кэширующий клиент Open Library
     """
     return clients_manager.get_cached_openlibrary()
+
+
+# ========== UNIT OF WORK ==========
+
+
+async def get_uow() -> UnitOfWork:
+    """
+    Получить UnitOfWork для атомарных транзакций.
+    
+    Использование в роутерах:
+    ```python
+    async def create_book(uow: UnitOfWorkDep):
+        async with uow:
+            book = await uow.books.create(...)
+            await uow.commit()
+    ```
+    
+    Returns:
+        UnitOfWork: Экземпляр Unit of Work
+    """
+    return UnitOfWork(async_session_maker)
 
 
 # ========== REPOSITORIES ==========
@@ -247,6 +269,7 @@ BookRepoDep = Annotated[BookRepository, Depends(get_book_repository)]
 AuthServiceDep = Annotated[AuthService, Depends(get_auth_service)]
 DbSessionDep = Annotated[AsyncSession, Depends(get_db)]
 CacheDep = Annotated[CacheService, Depends(get_cache)]
+UnitOfWorkDep = Annotated[UnitOfWork, Depends(get_uow)]
 
 # Аутентификация
 CurrentUser = Annotated[User, Depends(get_current_user)]
