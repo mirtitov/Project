@@ -218,6 +218,9 @@ class AuthService:
             role=UserRole.USER.value,
         )
         
+        # Commit транзакции (сервис отвечает за commit)
+        await self.user_repo.session.commit()
+        
         self.logger.info("User registered: %s", user.username)
         
         return UserResponse(
