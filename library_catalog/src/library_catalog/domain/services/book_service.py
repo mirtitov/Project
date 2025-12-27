@@ -111,6 +111,9 @@ class BookService:
             extra=extra,
         )
         
+        # 5. Commit транзакции (сервис отвечает за commit)
+        await self.book_repo.session.commit()
+        
         self.logger.info("Created book: %s (id=%s)", book.title, book.book_id)
         
         # 5. Маппинг в DTO
@@ -178,6 +181,9 @@ class BookService:
         # Обновить
         updated = await self.book_repo.update(book_id, **update_data)
         
+        # Commit транзакции
+        await self.book_repo.session.commit()
+        
         self.logger.info("Updated book: %s (id=%s)", updated.title, updated.book_id)
         
         return BookMapper.to_show_book(updated)
@@ -195,6 +201,9 @@ class BookService:
         deleted = await self.book_repo.delete(book_id)
         if not deleted:
             raise BookNotFoundException(book_id)
+        
+        # Commit транзакции
+        await self.book_repo.session.commit()
         
         self.logger.info("Deleted book: id=%s", book_id)
     

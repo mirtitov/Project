@@ -2,6 +2,10 @@
 Базовый репозиторий.
 
 Реализует паттерн Repository для CRUD операций с базой данных.
+
+ВАЖНО: Репозиторий НЕ делает commit!
+Commit - это ответственность сервисного слоя.
+Это обеспечивает атомарность транзакций при нескольких операциях.
 """
 
 from typing import Generic, TypeVar
@@ -21,6 +25,10 @@ class BaseRepository(Generic[T]):
     
     Использует Generic для типизации модели.
     
+    ВАЖНО: Репозиторий использует flush() вместо commit().
+    flush() генерирует ID и проверяет constraints,
+    но оставляет commit вызывающему коду (сервису).
+    
     Attributes:
         session: Async сессия SQLAlchemy
         model: Класс ORM модели
@@ -39,7 +47,10 @@ class BaseRepository(Generic[T]):
     
     async def create(self, **kwargs) -> T:
         """
-        Создать новую запись.
+        Создать новую запись БЕЗ commit.
+        
+        flush() генерирует ID и проверяет constraints,
+        но оставляет commit вызывающему коду.
         
         Args:
             **kwargs: Поля для создания записи
@@ -49,7 +60,7 @@ class BaseRepository(Generic[T]):
         """
         instance = self.model(**kwargs)
         self.session.add(instance)
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(instance)
         return instance
     
@@ -70,7 +81,7 @@ class BaseRepository(Generic[T]):
     
     async def update(self, id: UUID, **kwargs) -> T | None:
         """
-        Обновить запись.
+        Обновить запись БЕЗ commit.
         
         Args:
             id: UUID записи
@@ -87,13 +98,13 @@ class BaseRepository(Generic[T]):
             if hasattr(instance, key):
                 setattr(instance, key, value)
         
-        await self.session.commit()
+        await self.session.flush()
         await self.session.refresh(instance)
         return instance
     
     async def delete(self, id: UUID) -> bool:
         """
-        Удалить запись.
+        Удалить запись БЕЗ commit.
         
         Args:
             id: UUID записи
@@ -106,7 +117,7 @@ class BaseRepository(Generic[T]):
             return False
         
         await self.session.delete(instance)
-        await self.session.commit()
+        await self.session.flush()
         return True
     
     async def get_all(
@@ -138,4 +149,3 @@ class BaseRepository(Generic[T]):
         stmt = select(func.count()).select_from(self.model)
         result = await self.session.execute(stmt)
         return result.scalar() or 0
-
