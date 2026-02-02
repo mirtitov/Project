@@ -5,8 +5,7 @@ Contains common fixtures used across all tests.
 """
 
 import asyncio
-from collections.abc import AsyncGenerator
-from typing import Generator
+from collections.abc import AsyncGenerator, Generator
 
 import pytest
 import pytest_asyncio
@@ -16,9 +15,10 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_asyn
 from src.library_catalog.core.database import Base, get_db
 from src.library_catalog.main import app
 
-
 # Test database URL - uses a separate test database
-TEST_DATABASE_URL = "postgresql+asyncpg://postgres:postgres@localhost:5432/library_catalog_test"
+TEST_DATABASE_URL = (
+    "postgresql+asyncpg://postgres:postgres@localhost:5432/library_catalog_test"
+)
 
 
 @pytest.fixture(scope="session")
@@ -33,26 +33,26 @@ def event_loop() -> Generator:
 async def test_db() -> AsyncGenerator[AsyncSession, None]:
     """
     Create a test database session.
-    
+
     Creates all tables before the test and drops them after.
     """
     engine = create_async_engine(TEST_DATABASE_URL, echo=False)
-    
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    
+
     async_session = async_sessionmaker(
         engine,
         class_=AsyncSession,
         expire_on_commit=False,
     )
-    
+
     async with async_session() as session:
         yield session
-    
+
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
-    
+
     await engine.dispose()
 
 
@@ -60,17 +60,18 @@ async def test_db() -> AsyncGenerator[AsyncSession, None]:
 async def client(test_db: AsyncSession) -> AsyncGenerator[AsyncClient, None]:
     """
     Create a test HTTP client.
-    
+
     Overrides the database dependency to use the test database.
     """
+
     async def override_get_db():
         yield test_db
-    
+
     app.dependency_overrides[get_db] = override_get_db
-    
+
     async with AsyncClient(app=app, base_url="http://test") as ac:
         yield ac
-    
+
     app.dependency_overrides.clear()
 
 
@@ -98,4 +99,3 @@ def sample_book_data_no_isbn() -> dict:
         "genre": "Programming",
         "pages": 352,
     }
-

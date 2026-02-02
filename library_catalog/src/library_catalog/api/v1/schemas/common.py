@@ -14,10 +14,10 @@ T = TypeVar("T")
 class PaginationParams(BaseModel):
     """
     Параметры пагинации.
-    
+
     Используется как Query параметры в эндпоинтах списков.
     """
-    
+
     page: int = Field(
         1,
         ge=1,
@@ -29,12 +29,12 @@ class PaginationParams(BaseModel):
         le=100,
         description="Размер страницы (1-100)",
     )
-    
+
     @property
     def offset(self) -> int:
         """Вычислить offset для SQL запроса."""
         return (self.page - 1) * self.page_size
-    
+
     @property
     def limit(self) -> int:
         """Limit для SQL запроса."""
@@ -44,10 +44,10 @@ class PaginationParams(BaseModel):
 class PaginatedResponse(BaseModel, Generic[T]):
     """
     Generic схема для пагинированных ответов.
-    
+
     Содержит список элементов и метаданные пагинации.
     """
-    
+
     items: list[T] = Field(
         ...,
         description="Список элементов текущей страницы",
@@ -68,7 +68,7 @@ class PaginatedResponse(BaseModel, Generic[T]):
         ...,
         description="Общее количество страниц",
     )
-    
+
     @classmethod
     def create(
         cls,
@@ -78,18 +78,22 @@ class PaginatedResponse(BaseModel, Generic[T]):
     ) -> "PaginatedResponse[T]":
         """
         Создать пагинированный ответ.
-        
+
         Args:
             items: Список элементов текущей страницы
             total: Общее количество элементов
             pagination: Параметры пагинации
-            
+
         Returns:
             PaginatedResponse: Готовый ответ с метаданными
         """
         # Вычислить количество страниц (ceiling division)
-        pages = (total + pagination.page_size - 1) // pagination.page_size if total > 0 else 0
-        
+        pages = (
+            (total + pagination.page_size - 1) // pagination.page_size
+            if total > 0
+            else 0
+        )
+
         return cls(
             items=items,
             total=total,
@@ -102,10 +106,10 @@ class PaginatedResponse(BaseModel, Generic[T]):
 class HealthCheckResponse(BaseModel):
     """
     Схема для health check ответа.
-    
+
     Содержит статус сервиса и его компонентов.
     """
-    
+
     status: str = Field(
         "healthy",
         description="Общий статус сервиса",
@@ -119,10 +123,10 @@ class HealthCheckResponse(BaseModel):
 class MessageResponse(BaseModel):
     """
     Простой ответ с сообщением.
-    
+
     Используется для информационных ответов.
     """
-    
+
     message: str = Field(
         ...,
         description="Сообщение",
@@ -132,10 +136,10 @@ class MessageResponse(BaseModel):
 class ErrorResponse(BaseModel):
     """
     Схема для ошибок.
-    
+
     Используется для документации API.
     """
-    
+
     detail: str = Field(
         ...,
         description="Описание ошибки",
@@ -144,4 +148,3 @@ class ErrorResponse(BaseModel):
         None,
         description="Тип ошибки",
     )
-

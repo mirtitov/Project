@@ -13,15 +13,15 @@ from fastapi.responses import JSONResponse
 class AppException(Exception):
     """
     Базовое исключение приложения.
-    
+
     Все пользовательские исключения должны наследоваться от этого класса.
-    
+
     Attributes:
         message: Сообщение об ошибке
         status_code: HTTP код ответа
         details: Дополнительные детали ошибки
     """
-    
+
     def __init__(
         self,
         message: str,
@@ -37,10 +37,10 @@ class AppException(Exception):
 class NotFoundException(AppException):
     """
     Исключение: Ресурс не найден.
-    
+
     Используется когда запрашиваемый ресурс не существует в БД.
     """
-    
+
     def __init__(self, resource: str, identifier: Any):
         super().__init__(
             message=f"{resource} with id '{identifier}' not found",
@@ -52,10 +52,10 @@ class NotFoundException(AppException):
 class ValidationException(AppException):
     """
     Исключение: Ошибка валидации.
-    
+
     Используется для ошибок валидации бизнес-правил.
     """
-    
+
     def __init__(self, message: str, details: dict[str, Any] | None = None):
         super().__init__(
             message=message,
@@ -67,10 +67,10 @@ class ValidationException(AppException):
 class ConflictException(AppException):
     """
     Исключение: Конфликт.
-    
+
     Используется когда операция приводит к конфликту (например, дублирование).
     """
-    
+
     def __init__(self, message: str, details: dict[str, Any] | None = None):
         super().__init__(
             message=message,
@@ -82,10 +82,10 @@ class ConflictException(AppException):
 class ExternalServiceException(AppException):
     """
     Исключение: Ошибка внешнего сервиса.
-    
+
     Используется при ошибках обращения к внешним API.
     """
-    
+
     def __init__(self, service: str, message: str):
         super().__init__(
             message=f"{service} error: {message}",
@@ -97,11 +97,11 @@ class ExternalServiceException(AppException):
 def register_exception_handlers(app: FastAPI) -> None:
     """
     Зарегистрировать обработчики исключений для FastAPI.
-    
+
     Args:
         app: Экземпляр FastAPI приложения
     """
-    
+
     @app.exception_handler(AppException)
     async def app_exception_handler(
         request: Request,
@@ -116,7 +116,7 @@ def register_exception_handlers(app: FastAPI) -> None:
                 **exc.details,
             },
         )
-    
+
     @app.exception_handler(Exception)
     async def general_exception_handler(
         request: Request,
@@ -124,9 +124,10 @@ def register_exception_handlers(app: FastAPI) -> None:
     ) -> JSONResponse:
         """Обработчик для неперехваченных исключений."""
         import logging
+
         logger = logging.getLogger(__name__)
         logger.exception("Unhandled exception: %s", exc)
-        
+
         return JSONResponse(
             status_code=500,
             content={
@@ -134,4 +135,3 @@ def register_exception_handlers(app: FastAPI) -> None:
                 "type": "InternalError",
             },
         )
-

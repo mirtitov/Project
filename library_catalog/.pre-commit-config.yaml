@@ -1,0 +1,49 @@
+# Pre-commit hooks configuration
+# https://pre-commit.com/
+#
+# Установка: pre-commit install
+# Ручной запуск: pre-commit run --all-files
+
+repos:
+  # Ruff - быстрый линтер и форматтер для Python
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.14.0
+    hooks:
+      # Линтер
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+      # Форматтер (замена black)
+      - id: ruff-format
+
+  # Стандартные pre-commit hooks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace      # Удаляет пробелы в конце строк
+      - id: end-of-file-fixer        # Добавляет пустую строку в конце файла
+      - id: check-yaml               # Проверяет синтаксис YAML
+      - id: check-json               # Проверяет синтаксис JSON
+      - id: check-toml               # Проверяет синтаксис TOML
+      - id: check-added-large-files  # Предупреждает о больших файлах
+        args: ['--maxkb=500']
+      - id: check-merge-conflict     # Проверяет маркеры merge conflict
+      - id: debug-statements         # Проверяет наличие pdb/breakpoint
+      - id: detect-private-key       # Обнаруживает приватные ключи
+
+  # MyPy - статическая типизация
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.15.0
+    hooks:
+      - id: mypy
+        additional_dependencies:
+          - pydantic>=2.0
+          - sqlalchemy>=2.0
+          - fastapi>=0.109.0
+          - types-redis
+        args: [--ignore-missing-imports, --no-strict-optional]
+        files: ^src/
+
+# CI configuration
+ci:
+  autofix_commit_msg: "style: auto-fix by pre-commit hooks"
+  autoupdate_commit_msg: "chore: update pre-commit hooks"

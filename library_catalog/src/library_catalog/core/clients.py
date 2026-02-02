@@ -5,7 +5,6 @@
 """
 
 import logging
-from typing import Optional
 
 from ..core.cache import get_cache_service
 from ..core.config import settings
@@ -18,23 +17,23 @@ logger = logging.getLogger(__name__)
 class ClientsManager:
     """
     Менеджер для управления lifecycle внешних клиентов.
-    
+
     Преимущества:
     - Lazy initialization (клиенты создаются при первом обращении)
     - Proper cleanup при shutdown
     - Можно мокировать в тестах
     - Избегает memory leak от lru_cache с httpx.AsyncClient
     """
-    
+
     def __init__(self):
         """Инициализировать менеджер с пустыми клиентами."""
-        self._openlibrary: Optional[OpenLibraryClient] = None
-        self._cached_openlibrary: Optional[CachedOpenLibraryClient] = None
-    
+        self._openlibrary: OpenLibraryClient | None = None
+        self._cached_openlibrary: CachedOpenLibraryClient | None = None
+
     def get_openlibrary(self) -> OpenLibraryClient:
         """
         Получить OpenLibrary клиент (lazy initialization).
-        
+
         Returns:
             OpenLibraryClient: Клиент для Open Library API
         """
@@ -45,11 +44,11 @@ class ClientsManager:
                 timeout=settings.openlibrary_timeout,
             )
         return self._openlibrary
-    
+
     def get_cached_openlibrary(self) -> CachedOpenLibraryClient:
         """
         Получить кэширующий OpenLibrary клиент.
-        
+
         Returns:
             CachedOpenLibraryClient: Кэширующая обёртка для Open Library
         """
@@ -61,26 +60,25 @@ class ClientsManager:
                 ttl=settings.cache_ttl,
             )
         return self._cached_openlibrary
-    
+
     async def close_all(self) -> None:
         """
         Закрыть все клиенты.
-        
+
         Вызывается при shutdown приложения для освобождения ресурсов.
         """
         if self._cached_openlibrary is not None:
             logger.info("Closing CachedOpenLibrary client")
             await self._cached_openlibrary.close()
             self._cached_openlibrary = None
-        
+
         if self._openlibrary is not None:
             logger.info("Closing OpenLibrary client")
             await self._openlibrary.close()
             self._openlibrary = None
-        
+
         logger.info("All clients closed successfully")
 
 
 # Глобальный экземпляр менеджера клиентов
 clients_manager = ClientsManager()
-

@@ -38,13 +38,13 @@ async def create_book(
 ) -> ShowBook:
     """
     Создать новую книгу.
-    
+
     Автоматически обогащает данные из Open Library API:
     - Обложка книги
     - Темы/subjects
     - Издатель
     - Рейтинг
-    
+
     Если Open Library недоступен, книга все равно будет создана.
     """
     return await service.create_book(book_data)
@@ -62,22 +62,26 @@ async def get_books(
     request: Request,
     service: BookServiceDep,
     pagination: Annotated[PaginationParams, Depends()],
-    title: str | None = Query(None, description="Поиск по названию (частичное совпадение)"),
-    author: str | None = Query(None, description="Поиск по автору (частичное совпадение)"),
+    title: str | None = Query(
+        None, description="Поиск по названию (частичное совпадение)"
+    ),
+    author: str | None = Query(
+        None, description="Поиск по автору (частичное совпадение)"
+    ),
     genre: str | None = Query(None, description="Фильтр по жанру (точное совпадение)"),
     year: int | None = Query(None, description="Фильтр по году (точное совпадение)"),
     available: bool | None = Query(None, description="Фильтр по доступности"),
 ) -> PaginatedResponse[ShowBook]:
     """
     Получить список книг с фильтрацией.
-    
+
     Поддерживаемые фильтры:
     - title: частичное совпадение (регистронезависимо)
     - author: частичное совпадение (регистронезависимо)
     - genre: точное совпадение
     - year: точное совпадение
     - available: True/False
-    
+
     Пагинация:
     - page: номер страницы (начиная с 1)
     - page_size: размер страницы (1-100, по умолчанию 20)
@@ -91,7 +95,7 @@ async def get_books(
         limit=pagination.limit,
         offset=pagination.offset,
     )
-    
+
     return PaginatedResponse.create(books, total, pagination)
 
 
@@ -114,10 +118,10 @@ async def get_book(
 ) -> ShowBook:
     """
     Получить книгу по ID.
-    
+
     Returns:
         ShowBook: Полная информация о книге
-        
+
     Raises:
         404: Книга не найдена
     """
@@ -145,13 +149,13 @@ async def update_book(
 ) -> ShowBook:
     """
     Обновить книгу.
-    
+
     Передаются только те поля, которые нужно изменить.
     Остальные поля остаются без изменений.
-    
+
     Returns:
         ShowBook: Обновленная книга
-        
+
     Raises:
         404: Книга не найдена
         400: Невалидные данные
@@ -178,9 +182,8 @@ async def delete_book(
 ) -> None:
     """
     Удалить книгу.
-    
+
     Raises:
         404: Книга не найдена
     """
     await service.delete_book(book_id)
-

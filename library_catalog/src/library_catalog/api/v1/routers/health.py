@@ -22,11 +22,11 @@ router = APIRouter(prefix="/health", tags=["Health"])
 async def health_check(db: DbSessionDep) -> HealthCheckResponse:
     """
     Проверить здоровье сервиса.
-    
+
     Проверяет:
     - Сервис запущен
     - Подключение к БД работает
-    
+
     Returns:
         HealthCheckResponse: Статус сервиса и его компонентов
     """
@@ -36,9 +36,8 @@ async def health_check(db: DbSessionDep) -> HealthCheckResponse:
         db_status = "connected"
     except Exception:
         db_status = "disconnected"
-    
+
     return HealthCheckResponse(
         status="healthy",
         database=db_status,
     )
-

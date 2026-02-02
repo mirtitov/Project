@@ -19,6 +19,7 @@ from .config import settings
 
 class Base(DeclarativeBase):
     """Базовый класс для всех ORM моделей."""
+
     pass
 
 
@@ -43,10 +44,10 @@ async_session_maker = async_sessionmaker(
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     """
     Dependency для получения сессии БД.
-    
+
     Создает новую сессию для каждого запроса.
     Автоматически закрывает сессию после использования.
-    
+
     Yields:
         AsyncSession: Async сессия SQLAlchemy
     """
@@ -63,7 +64,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
 async def init_db() -> None:
     """
     Инициализировать подключение к БД.
-    
+
     Проверяет, что БД доступна при старте приложения.
     """
     async with engine.begin() as conn:
@@ -74,13 +75,14 @@ async def init_db() -> None:
 async def check_db_connection() -> bool:
     """
     Проверить подключение к БД.
-    
+
     Returns:
         bool: True если подключение успешно, False иначе
     """
     try:
         async with async_session_maker() as session:
             from sqlalchemy import text
+
             await session.execute(text("SELECT 1"))
             return True
     except Exception:
@@ -90,8 +92,7 @@ async def check_db_connection() -> bool:
 async def dispose_engine() -> None:
     """
     Закрыть все соединения с БД.
-    
+
     Вызывается при остановке приложения.
     """
     await engine.dispose()
-

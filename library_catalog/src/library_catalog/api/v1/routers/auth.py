@@ -36,7 +36,7 @@ async def register(
 ) -> UserResponse:
     """
     Зарегистрировать нового пользователя.
-    
+
     - Email должен быть уникальным
     - Username должен быть уникальным
     - Пароль минимум 8 символов
@@ -63,7 +63,7 @@ async def login(
 ) -> Token:
     """
     Выполнить логин.
-    
+
     Принимает username (или email) и password.
     Возвращает access_token и refresh_token.
     """
@@ -92,7 +92,7 @@ async def get_current_user(
 ) -> UserResponse:
     """
     Получить информацию о текущем авторизованном пользователе.
-    
+
     Требует валидный access token в заголовке Authorization.
     """
     return UserResponse(
@@ -103,4 +103,3 @@ async def get_current_user(
         is_active=current_user.is_active,
         created_at=current_user.created_at,
     )
-

@@ -24,7 +24,6 @@ from ..domain.services.book_service import BookService
 from ..external.openlibrary.cached_client import CachedOpenLibraryClient
 from ..external.openlibrary.client import OpenLibraryClient
 
-
 # ========== OAUTH2 ==========
 
 oauth2_scheme = OAuth2PasswordBearer(
@@ -39,7 +38,7 @@ oauth2_scheme = OAuth2PasswordBearer(
 def get_cache() -> CacheService:
     """
     Получить сервис кэширования.
-    
+
     Returns:
         CacheService: Сервис кэширования
     """
@@ -52,12 +51,12 @@ def get_cache() -> CacheService:
 def get_openlibrary_client() -> OpenLibraryClient:
     """
     Получить OpenLibraryClient из менеджера клиентов.
-    
+
     ClientsManager обеспечивает:
     - Lazy initialization
     - Proper cleanup при shutdown
     - Отсутствие memory leak
-    
+
     Returns:
         OpenLibraryClient: Клиент Open Library API
     """
@@ -67,7 +66,7 @@ def get_openlibrary_client() -> OpenLibraryClient:
 def get_cached_openlibrary_client() -> CachedOpenLibraryClient:
     """
     Получить CachedOpenLibraryClient из менеджера клиентов.
-    
+
     Returns:
         CachedOpenLibraryClient: Кэширующий клиент Open Library
     """
@@ -80,7 +79,7 @@ def get_cached_openlibrary_client() -> CachedOpenLibraryClient:
 async def get_uow() -> UnitOfWork:
     """
     Получить UnitOfWork для атомарных транзакций.
-    
+
     Использование в роутерах:
     ```python
     async def create_book(uow: UnitOfWorkDep):
@@ -88,7 +87,7 @@ async def get_uow() -> UnitOfWork:
             book = await uow.books.create(...)
             await uow.commit()
     ```
-    
+
     Returns:
         UnitOfWork: Экземпляр Unit of Work
     """
@@ -103,12 +102,12 @@ async def get_book_repository(
 ) -> BookRepository:
     """
     Создать BookRepository для текущей сессии БД.
-    
+
     Создается новый экземпляр для каждого запроса.
-    
+
     Args:
         db: Async сессия БД
-        
+
     Returns:
         BookRepository: Репозиторий книг
     """
@@ -120,10 +119,10 @@ async def get_user_repository(
 ) -> UserRepository:
     """
     Создать UserRepository для текущей сессии БД.
-    
+
     Args:
         db: Async сессия БД
-        
+
     Returns:
         UserRepository: Репозиторий пользователей
     """
@@ -135,21 +134,23 @@ async def get_user_repository(
 
 async def get_book_service(
     book_repo: Annotated[BookRepository, Depends(get_book_repository)],
-    ol_client: Annotated[CachedOpenLibraryClient, Depends(get_cached_openlibrary_client)],
+    ol_client: Annotated[
+        CachedOpenLibraryClient, Depends(get_cached_openlibrary_client)
+    ],
 ) -> BookService:
     """
     Создать BookService с внедренными зависимостями.
-    
+
     FastAPI автоматически разрешит все зависимости:
     1. get_db() создаст AsyncSession
     2. get_book_repository() создаст BookRepository с session
     3. get_cached_openlibrary_client() вернет кэширующий клиент
     4. Все внедрится в BookService
-    
+
     Args:
         book_repo: Репозиторий книг
         ol_client: Кэширующий клиент Open Library
-        
+
     Returns:
         BookService: Сервис для работы с книгами
     """
@@ -164,10 +165,10 @@ async def get_auth_service(
 ) -> AuthService:
     """
     Создать AuthService.
-    
+
     Args:
         user_repo: Репозиторий пользователей
-        
+
     Returns:
         AuthService: Сервис аутентификации
     """
@@ -183,14 +184,14 @@ async def get_current_user(
 ) -> User:
     """
     Получить текущего пользователя из токена.
-    
+
     Args:
         token: JWT токен из заголовка Authorization
         auth_service: Сервис аутентификации
-        
+
     Returns:
         User: Текущий пользователь
-        
+
     Raises:
         HTTPException: Если токен невалиден
     """
@@ -200,31 +201,31 @@ async def get_current_user(
             detail="Not authenticated",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     token_data = AuthService.decode_token(token)
-    
+
     if token_data is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     if token_data.token_type != "access":
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid token type",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     user = await auth_service.get_user_by_id(token_data.user_id)
-    
+
     if not user.is_active:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="User is deactivated",
         )
-    
+
     return user
 
 
@@ -234,12 +235,12 @@ async def get_current_user_optional(
 ) -> User | None:
     """
     Получить текущего пользователя (опционально).
-    
+
     Не выбрасывает исключение если пользователь не авторизован.
     """
     if token is None:
         return None
-    
+
     try:
         return await get_current_user(token, auth_service)
     except HTTPException:
@@ -251,7 +252,7 @@ async def get_admin_user(
 ) -> User:
     """
     Получить текущего пользователя с правами админа.
-    
+
     Raises:
         InsufficientPermissionsException: Если пользователь не админ
     """

@@ -98,4 +98,3 @@ USER appuser
 
 # Run with reload for development
 CMD ["uvicorn", "src.library_catalog.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
-

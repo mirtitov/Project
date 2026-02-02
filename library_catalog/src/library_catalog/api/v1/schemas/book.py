@@ -14,10 +14,10 @@ from pydantic import BaseModel, Field, field_validator
 class BookBase(BaseModel):
     """
     Базовая схема с общими полями.
-    
+
     Используется как основа для других схем.
     """
-    
+
     title: str = Field(
         ...,
         min_length=1,
@@ -57,10 +57,10 @@ class BookBase(BaseModel):
 class BookCreate(BookBase):
     """
     Схема для создания книги.
-    
+
     Добавляет опциональные поля ISBN и описание.
     """
-    
+
     isbn: str | None = Field(
         None,
         min_length=10,
@@ -74,31 +74,31 @@ class BookCreate(BookBase):
         description="Описание книги",
         examples=["A Handbook of Agile Software Craftsmanship"],
     )
-    
+
     @field_validator("isbn")
     @classmethod
     def validate_isbn(cls, v: str | None) -> str | None:
         """
         Валидация формата ISBN.
-        
+
         Проверяет что ISBN содержит только цифры и имеет правильную длину.
         """
         if v is None:
             return v
-        
+
         # Удалить дефисы и пробелы
         clean = v.replace("-", "").replace(" ", "")
-        
+
         # Проверить что только цифры (и X для ISBN-10)
         if not clean.replace("X", "").replace("x", "").isdigit():
             raise ValueError("ISBN must contain only digits and dashes")
-        
+
         # Проверить длину
         if len(clean) not in (10, 13):
             raise ValueError("ISBN must be 10 or 13 digits")
-        
+
         return v
-    
+
     model_config = {
         "json_schema_extra": {
             "examples": [
@@ -119,10 +119,10 @@ class BookCreate(BookBase):
 class BookUpdate(BaseModel):
     """
     Схема для обновления книги.
-    
+
     Все поля опциональны - передаются только изменяемые.
     """
-    
+
     title: str | None = Field(
         None,
         min_length=1,
@@ -164,7 +164,7 @@ class BookUpdate(BaseModel):
         None,
         description="Описание книги",
     )
-    
+
     model_config = {
         "json_schema_extra": {
             "examples": [
@@ -179,10 +179,10 @@ class BookUpdate(BaseModel):
 class ShowBook(BookBase):
     """
     Схема для отображения книги (response).
-    
+
     Включает все поля, включая автогенерируемые.
     """
-    
+
     book_id: UUID = Field(
         ...,
         description="Уникальный идентификатор книги",
@@ -211,7 +211,7 @@ class ShowBook(BookBase):
         ...,
         description="Дата последнего обновления",
     )
-    
+
     model_config = {
         "from_attributes": True,  # Для работы с ORM моделями
         "json_schema_extra": {
@@ -234,17 +234,17 @@ class ShowBook(BookBase):
                     "updated_at": "2024-01-01T12:00:00",
                 }
             ]
-        }
+        },
     }
 
 
 class BookFilters(BaseModel):
     """
     Схема для фильтров поиска книг.
-    
+
     Используется как Query параметры.
     """
-    
+
     title: str | None = Field(
         None,
         description="Поиск по названию (частичное совпадение)",
@@ -265,4 +265,3 @@ class BookFilters(BaseModel):
         None,
         description="Фильтр по доступности",
     )
-

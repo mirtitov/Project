@@ -14,12 +14,12 @@ from .config import settings
 def get_client_ip(request: Request) -> str:
     """
     Получить IP клиента для rate limiting.
-    
+
     Учитывает X-Forwarded-For заголовок для работы за reverse proxy.
-    
+
     Args:
         request: FastAPI Request
-        
+
     Returns:
         str: IP адрес клиента
     """
@@ -28,7 +28,7 @@ def get_client_ip(request: Request) -> str:
     if forwarded:
         # Берем первый IP (реальный клиент)
         return forwarded.split(",")[0].strip()
-    
+
     return get_remote_address(request)
 
 
@@ -44,10 +44,10 @@ limiter = Limiter(
 def limit_auth(limit: str = "5/minute"):
     """
     Лимит для auth эндпоинтов (более строгий).
-    
+
     Args:
         limit: Лимит в формате "N/period"
-        
+
     Returns:
         Decorator: Декоратор slowapi
     """
@@ -57,10 +57,10 @@ def limit_auth(limit: str = "5/minute"):
 def limit_write(limit: str = "30/minute"):
     """
     Лимит для write операций (POST, PUT, DELETE).
-    
+
     Args:
         limit: Лимит в формате "N/period"
-        
+
     Returns:
         Decorator: Декоратор slowapi
     """
@@ -70,12 +70,11 @@ def limit_write(limit: str = "30/minute"):
 def limit_read(limit: str = "100/minute"):
     """
     Лимит для read операций (GET).
-    
+
     Args:
         limit: Лимит в формате "N/period"
-        
+
     Returns:
         Decorator: Декоратор slowapi
     """
     return limiter.limit(limit)
-

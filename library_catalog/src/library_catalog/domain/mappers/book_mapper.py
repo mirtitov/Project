@@ -11,19 +11,19 @@ from ...data.models.book import Book
 class BookMapper:
     """
     Маппер для преобразования Book entity в DTO.
-    
+
     Содержит статические методы для преобразования
     ORM моделей в Pydantic схемы для API ответов.
     """
-    
+
     @staticmethod
     def to_show_book(book: Book) -> ShowBook:
         """
         Преобразовать Book ORM модель в ShowBook DTO.
-        
+
         Args:
             book: ORM модель из БД
-            
+
         Returns:
             ShowBook: Pydantic модель для API ответа
         """
@@ -41,17 +41,16 @@ class BookMapper:
             created_at=book.created_at,
             updated_at=book.updated_at,
         )
-    
+
     @staticmethod
     def to_show_books(books: list[Book]) -> list[ShowBook]:
         """
         Преобразовать список Book ORM моделей в список ShowBook DTO.
-        
+
         Args:
             books: Список ORM моделей
-            
+
         Returns:
             list[ShowBook]: Список Pydantic моделей
         """
         return [BookMapper.to_show_book(book) for book in books]
-

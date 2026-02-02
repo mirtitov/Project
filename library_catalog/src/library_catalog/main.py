@@ -8,7 +8,6 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
 from slowapi import _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 
@@ -21,7 +20,6 @@ from .core.exceptions import register_exception_handlers
 from .core.logging_config import setup_logging
 from .core.rate_limit import limiter
 
-
 # ========== LIFECYCLE EVENTS ==========
 
 
@@ -29,35 +27,35 @@ from .core.rate_limit import limiter
 async def lifespan(app: FastAPI):
     """
     Lifecycle manager для FastAPI.
-    
+
     Выполняется при:
     - startup: настройка логирования, инициализация кэша
     - shutdown: закрытие подключений к БД
     """
     # Startup
     setup_logging()
-    
+
     # Инициализация кэша
     use_redis = settings.cache_backend == "redis"
-    cache = init_cache(use_redis=use_redis, redis_url=settings.redis_url)
+    init_cache(use_redis=use_redis, redis_url=settings.redis_url)
     cache_type = "Redis" if use_redis else "In-Memory"
-    
+
     print("🚀 Application started")
     print(f"📚 {settings.app_name} v1.0.0")
     print(f"📖 Docs: http://localhost:8000{settings.docs_url}")
     print(f"💾 Cache: {cache_type}")
-    
+
     yield
-    
+
     # Shutdown
     print("👋 Shutting down...")
-    
+
     # Закрыть внешние клиенты (избегаем memory leak)
     await clients_manager.close_all()
-    
+
     # Закрыть соединения с БД
     await dispose_engine()
-    
+
     print("✅ Application stopped")
 
 
@@ -147,7 +145,7 @@ app.include_router(
 async def root():
     """
     Корневой эндпоинт.
-    
+
     Возвращает приветственное сообщение и ссылки на документацию.
     """
     return {
@@ -163,11 +161,10 @@ async def root():
 
 if __name__ == "__main__":
     import uvicorn
-    
+
     uvicorn.run(
         "src.library_catalog.main:app",
         host="0.0.0.0",
         port=8000,
         reload=settings.debug,
     )
-
